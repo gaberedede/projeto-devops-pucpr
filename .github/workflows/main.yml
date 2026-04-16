@@ -5,10 +5,11 @@ on:
   pull_request:
 
 jobs:
-  pipeline:
+  # --- PRIMEIRO QUADRADO: CI ---
+  build:
+    name: Integração Contínua (CI)
     runs-on: ubuntu-latest
     steps:
-      # --- ETAPA DE CI (Integração Contínua) ---
       - name: Baixar o código do repositório
         uses: actions/checkout@v3
       
@@ -18,11 +19,22 @@ jobs:
           python-version: '3.9'
           
       - name: Instalar dependências
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
         
-      - name: Rodar teste de validação (CI)
-        run: python -c "import flask; print('CI: Teste concluído com sucesso!')"
+      - name: Rodar teste de validação
+        run: |
+          python -c "import flask; print('Teste concluido com sucesso!')"
 
-      # --- ETAPA DE CD (Entrega Contínua) ---
-      - name: Construir a Imagem Docker (CD)
-        run: docker build -t meu-projeto-devops:latest .
+  # --- SEGUNDO QUADRADO: CD ---
+  deploy:
+    name: Entrega Contínua (CD)
+    needs: build  # <- É ISSO AQUI QUE CRIA A LINHA LIGANDO OS DOIS QUADRADOS!
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código do repositório
+        uses: actions/checkout@v3
+        
+      - name: Construir a Imagem Docker
+        run: |
+          docker build -t meu-projeto-devops:latest .
