@@ -1,0 +1,22 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Configurar o Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+        
+      - name: Rodar teste simples
+        run: python -c "import flask; print('Sucesso!')"
