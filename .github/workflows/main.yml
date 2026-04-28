@@ -5,36 +5,40 @@ on:
   pull_request:
 
 jobs:
-  # --- PRIMEIRO QUADRADO: CI ---
-  build:
-    name: Integração Contínua (CI)
+  # --- PRIMEIRO QUADRADO: TESTES (CI) ---
+  testes_qualidade:
+    name: Inspeção e Testes
     runs-on: ubuntu-latest
     steps:
-      - name: Baixar o código do repositório
+      - name: Baixar o código
         uses: actions/checkout@v3
       
-      - name: Configurar o Python
+      - name: Instalar Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
           
-      - name: Instalar dependências
-        run: |
-          pip install -r requirements.txt
+      - name: Instalar lista de compras (requirements)
+        run: pip install -r requirements.txt
         
-      - name: Rodar teste de validação
-        run: |
-          python -c "import flask; print('Teste concluido com sucesso!')"
+      - name: Executar os 5 Testes Unitários
+        run: pytest test_app.py
 
-  # --- SEGUNDO QUADRADO: CD ---
-  deploy:
-    name: Entrega Contínua (CD)
-    needs: build  # <- É ISSO AQUI QUE CRIA A LINHA LIGANDO OS DOIS QUADRADOS!
+  # --- SEGUNDO QUADRADO: DOCKER E ALERTA (CD) ---
+  empacotar_e_avisar:
+    name: Docker e Alerta
+    needs: testes_qualidade # só roda se os testes passarem!
     runs-on: ubuntu-latest
     steps:
-      - name: Baixar o código do repositório
+      - name: Baixar o código
         uses: actions/checkout@v3
-        
-      - name: Construir a Imagem Docker
+
+      - name: Criar a caixa do Docker
+        run: docker build -t projeto-devops:latest .
+
+      - name: Tocar a campainha no Discord
+        if: always() # Vai mandar mensagem mesmo se der erro antes
         run: |
-          docker build -t meu-projeto-devops:latest .
+          curl -H "Content-Type: application/json" \
+          -d '{"content": " **ATENÇÃO: ATUALIZAÇÃO NO PROJETO DEVOPS!** \nUma nova etapa passou pela esteira.\n**Status:** ${{ job.status }}"}' \
+          ${{ secrets.DISCORD_WEBHOOK }}
